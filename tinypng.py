@@ -20,9 +20,22 @@ def loadImageFileAsRGBArray(fname) :
     img = Image.open(fname)
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore')
-        img_rgb = img.convert('RGB')
+        if img.mode in ['RGBA'] :
+            arr_rgba = np.asarray(img)
+            arr_rgb   = arr_rgba[:, :, :3].astype(np.float32)
+            arr_alpha = arr_rgba[:, :,  3].astype(np.float32) / 255.0
+            arr_rgb[:, :, 0] *= arr_alpha
+            arr_rgb[:, :, 1] *= arr_alpha
+            arr_rgb[:, :, 2] *= arr_alpha
+            arr_rgb[:, :, 0] += (1.0 - arr_alpha) * 255.0
+            arr_rgb[:, :, 1] += (1.0 - arr_alpha) * 255.0
+            arr_rgb[:, :, 2] += (1.0 - arr_alpha) * 255.0
+            arr_rgb = arr_rgb.clip(0.0, 255.9).astype(np.uint8)
+        else :
+            img_rgb = img.convert('RGB')
+            arr_rgb = np.asarray(img_rgb)
     img.close()
-    return np.asarray(img_rgb)
+    return arr_rgb
 
 
 
@@ -38,7 +51,7 @@ def saveImageAsPalettePNGusingKMeans(quant, img_array2d, fname) :
         warnings.filterwarnings('ignore')
         kmeans_res = MiniBatchKMeans(n_clusters=kmeans_n_clusters, init='k-means++', max_iter=100, batch_size=32768, compute_labels=True, random_state=0).fit(img_array1d)
     
-    palette_array = np.array(kmeans_res.cluster_centers_ + 0.5, dtype=np.uint8)
+    palette_array = (kmeans_res.cluster_centers_ + 0.5).clip(0.0, 255.9).astype(np.uint8)
     
     img_palette_array1d = palette_array[kmeans_res.labels_]
     
