@@ -68,7 +68,7 @@ if __name__ == '__main__':
         else :
             quant = 100
         quant = max(min(quant, 256), 2)
-    except:
+    except ValueError:
         print('Usage: python  %s  <source_directory>  <destination_directory>  [<quant(2~256)>]' % sys.argv[0])
         exit(1)
     print('source_directory      = %s' % src_dir )
